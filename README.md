@@ -4,6 +4,7 @@
 - [uninstall](#uninstall)
 
 ## Install
+Install medik8s through the operator
 ```
 k create ns poison-pill
 k create -f install/medik8s-operator.yaml
