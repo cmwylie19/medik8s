@@ -116,7 +116,19 @@ expected result
 Time: 1ms
 ```
 
-We know we can read and write to the database, now we will simulate failure.  We are going to attach a new Network ACL to the instance running in the `us-east-2b` region.
+We know that the database is operational, now we will simulate failure.  We are going to attach a new Network ACL to the instance running in the `us-east-2b` region, but first, lets create a watch command in the pods -n the cockroachdb namespace and another on the nodes themselves.
+
+**terminal 1**
+_watch pods_
+```
+for z in $(seq 999); do kubectl get pods -o wide -n cockroachdb; sleep 2s; done
+```
+**terminal 2**
+_watch nodes_
+```
+for z in $(seq 999); do k get nodes; sleep 2s; done
+```
+
 
 **Create a new Network ACL in the same VPC as your cluster**
 1. Go into the AWS console to the instances, select any instance of the nodes on your cluster. Once selected, click on the VPC ID in the instance details. Take a note of the VPC ID.
@@ -124,7 +136,12 @@ We know we can read and write to the database, now we will simulate failure.  We
 3. After you click Network ACLs, you will be directed to a page where you will see a button **Create Network ACL**, click that.
 4. Create a network ACL with a unique name, mine was casey-acl, and for the VPC, use the VPC that your clusters are in, and create the ACL.
 
-Go into the AWS console to the instances, select the instance (node) in the in the us-east-2b region, once selected, in the details section click the Subnet ID, select the subneta and click Network ACL, and Edit Network ACL Association.
+**Simulate failure on the target node**
+1. Go into the AWS console to the instances, select the instance (node) in the us-east-2b region, once selected, in the details section click the Subnet ID
+2. Select the subnet ID, and lick Network ACL on the details table, then **Edit Network ACL association**.
+3. Select the newly created ACL
+
+, select the subneta and click Network ACL, and Edit Network ACL Association.
 
 
 ## Uninstall
