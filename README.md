@@ -118,6 +118,12 @@ Time: 1ms
 
 We know we can read and write to the database, now we will simulate failure.  We are going to attach a new Network ACL to the instance running in the `us-east-2b` region.
 
+**Create a new Network ACL in the same VPC as your cluster**
+1. Go into the AWS console to the instances, select any instance of the nodes on your cluster. Once selected, click on the VPC ID in the instance details. Take a note of the VPC ID.
+2. Once you have clicked on the VPC ID, you will see a panel on the left hand side that said **Security** in bold and Network ACLs below, click Network ACLs.
+3. After you click Network ACLs, you will be directed to a page where you will see a button **Create Network ACL**, click that.
+4. Create a network ACL with a unique name, mine was casey-acl, and for the VPC, use the VPC that your clusters are in, and create the ACL.
+
 Go into the AWS console to the instances, select the instance (node) in the in the us-east-2b region, once selected, in the details section click the Subnet ID, select the subneta and click Network ACL, and Edit Network ACL Association.
 
 
