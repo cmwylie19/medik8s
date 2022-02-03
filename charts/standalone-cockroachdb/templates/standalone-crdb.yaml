@@ -96,7 +96,7 @@ spec:
       labels:
         app: cockroachdb
     spec:
-      nodeName: ip-10-0-215-83.us-east-2.compute.internal
+      nodeName: {{ .Values.nameName }}
       serviceAccountName: cockroachdb
       affinity:
         podAntiAffinity:
