@@ -1,0 +1,181 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: cockroachdb
+  namespace: cockroachdb
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: cluster-admin-crdb-sa
+  labels: 
+    app: cockroachdb
+subjects:
+  - kind: ServiceAccount
+    name: cockroachdb 
+    namespace: cockroachdb
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+---
+apiVersion: v1
+kind: Service
+metadata:
+  # This service is meant to be used by clients of the database. It exposes a ClusterIP that will
+  # automatically load balance connections to the different database pods.
+  name: cockroachdb-public
+  namespace: cockroachdb
+  labels:
+    app: cockroachdb
+spec:
+  ports:
+  # The main port, served by gRPC, serves Postgres-flavor SQL, internode
+  # traffic and the cli.
+  - port: 26257
+    targetPort: 26257
+    name: grpc
+  # The secondary port serves the UI as well as health and debug endpoints.
+  - port: 8080
+    targetPort: 8080
+    name: http
+  selector:
+    app: cockroachdb
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cockroachdb
+  namespace: cockroachdb
+  labels:
+    app: cockroachdb
+  annotations:
+    service.alpha.kubernetes.io/tolerate-unready-endpoints: "true"
+    # Enable automatic monitoring of all instances when Prometheus is running in the cluster.
+    prometheus.io/scrape: "true"
+    prometheus.io/path: "_status/vars"
+    prometheus.io/port: "8080"
+spec:
+  ports:
+  - port: 26257
+    targetPort: 26257
+    name: grpc
+  - port: 8080
+    targetPort: 8080
+    name: http
+  publishNotReadyAddresses: true
+  clusterIP: None
+  selector:
+    app: cockroachdb
+---
+apiVersion: policy/v1beta1
+kind: PodDisruptionBudget
+metadata:
+  name: cockroachdb-budget
+  namespace: cockroachdb
+  labels:
+    app: cockroachdb
+spec:
+  selector:
+    matchLabels:
+      app: cockroachdb
+  maxUnavailable: 1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cockroachdb
+  namespace: cockroachdb
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cockroachdb
+  template:
+    metadata:
+      labels:
+        app: cockroachdb
+    spec:
+      serviceAccountName: cockroachdb
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - cockroachdb
+              topologyKey: kubernetes.io/hostname
+      containers:
+      - name: cockroachdb
+        image: cockroachdb/cockroach:v21.2.4
+        imagePullPolicy: IfNotPresent
+        resources:
+          requests:
+            cpu: "2"
+            memory: "8Gi"
+          limits:
+            cpu: "2"
+            memory: "8Gi" 
+        ports:
+        - containerPort: 26257
+          name: grpc
+        - containerPort: 8080
+          name: http
+        volumeMounts:
+        - name: datadir
+          mountPath: /cockroach/cockroach-data
+        env:
+        - name: COCKROACH_CHANNEL
+          value: kubernetes-insecure
+        - name: GOMAXPROCS
+          valueFrom:
+            resourceFieldRef:
+              resource: limits.cpu
+              divisor: "1"
+        - name: MEMORY_LIMIT_MIB
+          valueFrom:
+            resourceFieldRef:
+              resource: limits.memory
+              divisor: "1Mi"
+        command:
+          - "/bin/bash"
+          - "-ecx"
+          - exec /cockroach/cockroach start-single-node --insecure --http-addr=0.0.0.0 --listen-addr=0.0.0.0:26257
+          # - /cockroach/cockroach start-single-node --insecure  --listen-addr=localhost:26257 --http-addr=localhost:8080  --background
+
+      # No pre-stop hook is required, a SIGTERM plus some time is all that's
+      # needed for graceful shutdown of a node.
+      terminationGracePeriodSeconds: 60
+      volumes:
+        - name: datadir
+          persistentVolumeClaim:
+            claimName: crdb-pvc
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: crdb-pv
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /data/crdb
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: crdb-pvc
+  namespace: cockroachdb
+spec:
+  resources:
+    requests:
+      storage: 1Gi
+  accessModes:
+    - ReadWriteOnce

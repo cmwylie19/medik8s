@@ -1,0 +1,21 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  labels:
+    operators.coreos.com/poison-pill-operator.poison-pill: ''
+  name: poison-pill-operator
+  namespace: poison-pill
+spec:
+  channel: alpha
+  installPlanApproval: Automatic
+  name: poison-pill-operator
+  source: community-operators
+  sourceNamespace: openshift-marketplace
+  startingCSV: poison-pill.v0.1.4
+---
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  name: poison-pill-zfbr9
+  namespace: poison-pill
+spec: {}
