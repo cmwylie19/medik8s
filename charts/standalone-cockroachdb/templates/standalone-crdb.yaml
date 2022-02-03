@@ -96,7 +96,16 @@ spec:
       labels:
         app: cockroachdb
     spec:
-      nodeName: {{ .Values.nameName }}
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                - key: topology.ebs.csi.aws.com/zone
+                  operator: NotIn
+                  values:
+                  - {{ .Values.controlPlaneAZ }}
+ 
       serviceAccountName: cockroachdb
       affinity:
         podAntiAffinity:

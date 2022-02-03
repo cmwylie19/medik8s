@@ -78,7 +78,7 @@ Now, lets install standalone cockroachDB through the helm chart.
 
 ```
 kubectl create ns cockroachdb
-helm install crdb charts/standalone-cockroachdb --set nodeName=$TARGET_NODE -n cockroachdb
+helm install crdb -n cockroachdb --set controlPlaneAZ=us-east-2a charts/standalone-cockroachdb
 ```
 
 Verify that the pod was installed and running on the correct node after it has time to get into the running state.
@@ -129,6 +129,13 @@ _watch nodes_
 for z in $(seq 999); do k get nodes; sleep 2s; done
 ```
 
+Before we simulate failure, lets tell the NodeHealthCheck operator that we only want to wait 10 seconds to reboot an unhealthy node, this is quicker for demo purposes.
+This simulates a threshold in which we want the poison-pill to take action.
+```
+kubectl edit poisonpillconfig poison-pill-config -n poison-pill
+
+set safeTimeToAssumeNodeRebootedSeconds: 10
+```
 
 **Create a new Network ACL in the same VPC as your cluster**
 1. Go into the AWS console to the instances, select any instance of the nodes on your cluster. Once selected, click on the VPC ID in the instance details. Take a note of the VPC ID.
