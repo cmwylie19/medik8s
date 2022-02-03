@@ -1,6 +1,7 @@
 # Medik8s
-- [background](#background)
-- [install](#install)
+- [Background](#background)
+- [Install Medik8s](#install-medik8s)
+- [Install CockroachDB](#install-standalone-cockroachdb)
 - [Demo](#demo)
 - [uninstall](#uninstall)
 
@@ -88,21 +89,35 @@ kubectl get pods -n cockroachdb -o wide -n cockroachdb
 Make sure the node is the same as the `TARGET_NODE`.
 
 ## Demo
-Install CockroachDB in a Deployment with a single replica backed by a PVC and PV with accessMode set to `RWO`
-```
-k create ns cockroachdb
-k create -f install/standalone-crdb.yaml
-```
+So far we have installed `Medik8s` and a standalone instance of CockroachDB deployed by a Deployment with a single replica backed by a PV and PVC with accessModes set to ReadWriteOnce. The next step is to add data to the database and simulate failure on the node and see if we can recover after failure 
 
-Insert some data into the database
-```
-k exec -it cockroachdb-9c5ccf6fc-7g4wp  -n cockroachdb -- cockroach sql --insecure  --execute="CREATE TABLE roaches (name STRING, country STRING); INSERT INTO roaches VALUES ('American Cockroach', 'United States'), ('Brownbanded Cockroach', 'United States')
-```
 
+Insert some data into the database. Find the pod in the cockroachdb namespace, exec into it and inject some test data.
+```
+k exec -it <crdb-pod>  -n cockroachdb -- cockroach sql --insecure  --execute="CREATE TABLE roaches (name STRING, country STRING); INSERT INTO roaches VALUES ('American Cockroach', 'United States'), ('Brownbanded Cockroach', 'United States')"
+```
+expected result
+```
+INSERT 2
+```
 Read the data from the database
 ```
-k exec -it cockroachdb-9c5ccf6fc-7g4wp  -n cockroachdb -- cockroach sql --insecure  --execute="SELECT * FROM roaches;"
+k exec -it <crdb-pod>  -n cockroachdb -- cockroach sql --insecure  --execute="SELECT * FROM roaches;"
 ```
+expected result
+```
+          name          |    country
+------------------------+----------------
+  American Cockroach    | United States
+  Brownbanded Cockroach | United States
+(2 rows)
+
+
+Time: 1ms
+```
+
+We know we can read and write to the database, now we will simulate failure.
+
 
 ## Uninstall
 Clean up medik8s and CockroachDB
