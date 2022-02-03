@@ -116,7 +116,9 @@ expected result
 Time: 1ms
 ```
 
-We know we can read and write to the database, now we will simulate failure.
+We know we can read and write to the database, now we will simulate failure.  We are going to attach a new Network ACL to the instance running in the `us-east-2b` region.
+
+Go into the AWS console to the instances, select the instance (node) in the in the us-east-2b region, once selected, in the details section click the Subnet ID, select the subneta and click Network ACL, and Edit Network ACL Association.
 
 
 ## Uninstall
