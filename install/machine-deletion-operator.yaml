@@ -1,0 +1,33 @@
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  generation: 1
+  labels:
+    operators.coreos.com/machine-deletion-operator.openshift-operators: ""
+  name: machine-deletion-operator
+  namespace: poison-pill
+spec:
+  channel: alpha
+  installPlanApproval: Automatic
+  name: machine-deletion-operator
+  source: community-operators
+  sourceNamespace: openshift-marketplace
+  startingCSV: machine-deletion.v0.0.1
+---
+apiVersion: operators.coreos.com/v1
+kind: OperatorGroup
+metadata:
+  name: machine-deletion-og
+  namespace: poison-pill
+spec: {}
+---
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: my-machine-deletion-operator
+  namespace: poison-pill
+spec:
+  channel: alpha
+  name: machine-deletion-operator
+  source: operatorhubio-catalog
+  sourceNamespace: olm

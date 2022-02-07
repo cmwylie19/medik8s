@@ -5,7 +5,7 @@
 - [Demo](#demo)
 - [uninstall](#uninstall)
 
-
+for z in $(seq 999); do kubectl get pod -o=custom-columns=NODE:.spec.nodeName,NAME:.metadata.name   -n cockroachdb; sleep 3s; done
 ## Background
 This guide assumes that you have created a cluster with worker nodes in 3 different availability zones. We will use the PoisonPill operator to recover workloads in the event of a Node failure. The specific challange we will address is where we have CockroachDB  deployed as a Deployment backed by a PV and PVC with accessModes set to ReadWriteOnce. We will simulate the node failure by creating a net Network ACL in AWS with no Inbound or Outbound rules configured and assigning it to the node that we want to fail.
 
@@ -158,3 +158,6 @@ k delete -f install/
 k delete -f ds -n poison-pill --all --force --grace-period=0
 k delete ns poison-pill --wait
 ```
+
+# notes
+https://docs.openshift.com/container-platform/4.9/nodes/nodes/eco-poison-pill-operator.html

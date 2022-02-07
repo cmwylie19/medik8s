@@ -1,0 +1,25 @@
+apiVersion: remediation.medik8s.io/v1alpha1
+kind: NodeHealthCheck
+metadata:
+  name: nhc-worker-default
+spec:
+  minHealthy: 51%
+  remediationTemplate:
+    apiVersion: poison-pill.medik8s.io/v1alpha1
+    kind: PoisonPillRemediationTemplate
+    name: poison-pill-default-template
+    namespace: openshift-operators
+  selector:
+    matchExpressions:
+    - key: node-role.kubernetes.io/worker
+      operator: Exists
+  unhealthyConditions:
+  - duration: 10s
+    status: "False"
+    type: Ready
+  - duration: 10s
+    status: Unknown
+    type: Ready
+status:
+  healthyNodes: 3
+  observedNodes: 3
